@@ -23,10 +23,6 @@ jobs:
       - name: Find Gradle project
         id: project
         run: |
-          echo "Current directory:"
-          pwd
-          echo "Files:"
-          find . -maxdepth 4 \( -name build.gradle -o -name build.gradle.kts -o -name settings.gradle -o -name gradlew \)
           if [ -f "build.gradle" ] || [ -f "build.gradle.kts" ]; then
             echo "dir=." >> "$GITHUB_OUTPUT"
           elif [ -f "fabric-mod-builder/build.gradle" ] || [ -f "fabric-mod-builder/build.gradle.kts" ]; then
@@ -41,9 +37,7 @@ jobs:
 
       - name: Build Mod
         working-directory: ${{ steps.project.outputs.dir }}
-        run: |
-          chmod +x gradlew
-          ./gradlew build --no-daemon --stacktrace
+        run: gradle build --no-daemon --stacktrace
 
       - name: Upload JAR
         uses: actions/upload-artifact@v4
