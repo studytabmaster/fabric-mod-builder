@@ -20,25 +20,35 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Find Gradle project
+        id: project
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "Files:"
+          find . -maxdepth 4 \( -name build.gradle -o -name build.gradle.kts -o -name settings.gradle -o -name gradlew \)
+          if [ -f "build.gradle" ] || [ -f "build.gradle.kts" ]; then
+            echo "dir=." >> "$GITHUB_OUTPUT"
+          elif [ -f "fabric-mod-builder/build.gradle" ] || [ -f "fabric-mod-builder/build.gradle.kts" ]; then
+            echo "dir=fabric-mod-builder" >> "$GITHUB_OUTPUT"
+          else
+            echo "Gradle project not found"
+            exit 1
+          fi
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build Fabric Mod
+      - name: Build Mod
+        working-directory: ${{ steps.project.outputs.dir }}
         run: |
-          if [ -f "./gradlew" ]; then
-            chmod +x ./gradlew
-            ./gradlew build --no-daemon --stacktrace
-          elif [ -f "./gradlew.bat" ]; then
-            echo "Gradle wrapper is incomplete."
-            exit 1
-          else
-            gradle build --no-daemon --stacktrace
-          fi
+          chmod +x gradlew
+          ./gradlew build --no-daemon --stacktrace
 
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
           name: Fabric-Mod-JAR
           path: |
-            build/libs/*.jar
+            **/build/libs/*.jar
           if-no-files-found: error
