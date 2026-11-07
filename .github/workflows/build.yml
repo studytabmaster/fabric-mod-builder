@@ -3,7 +3,8 @@ name: Build Fabric Mod
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
@@ -22,13 +23,22 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build Mod
+      - name: Build Fabric Mod
         run: |
-          chmod +x gradlew
-          ./gradlew build --no-daemon --stacktrace
+          if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
+            ./gradlew build --no-daemon --stacktrace
+          elif [ -f "./gradlew.bat" ]; then
+            echo "Gradle wrapper is incomplete."
+            exit 1
+          else
+            gradle build --no-daemon --stacktrace
+          fi
 
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
           name: Fabric-Mod-JAR
-          path: build/libs/*.jar
+          path: |
+            build/libs/*.jar
+          if-no-files-found: error
