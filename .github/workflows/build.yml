@@ -1,3 +1,4 @@
+
 name: Build
 
 on:
@@ -26,14 +27,37 @@ jobs:
         with:
           gradle-version: 8.6
 
-      - name: Show project structure
+      - name: Find Gradle Project
+        id: find-project
+        shell: bash
         run: |
-          pwd
-          ls -la
-          find . -maxdepth 3 \( -name settings.gradle -o -name settings.gradle.kts -o -name build.gradle -o -name build.gradle.kts \)
+          echo "Searching for Gradle project..."
 
-      - name: Build
-        working-directory: ./fabric-mod-builder
+          BUILD_FILE=$(find . -maxdepth 5 -type f \
+            \( -name "settings.gradle" \
+            -o -name "settings.gradle.kts" \) \
+            | head -n 1)
+
+          if [ -z "$BUILD_FILE" ]; then
+            BUILD_FILE=$(find . -maxdepth 5 -type f \
+              \( -name "build.gradle" \
+              -o -name "build.gradle.kts" \) \
+              | head -n 1)
+          fi
+
+          if [ -z "$BUILD_FILE" ]; then
+            echo "ERROR: No Gradle project found!"
+            find . -maxdepth 4 -type f
+            exit 1
+          fi
+
+          PROJECT_DIR=$(dirname "$BUILD_FILE")
+          echo "project_dir=$PROJECT_DIR" >> "$GITHUB_OUTPUT"
+
+          echo "Gradle project found: $PROJECT_DIR"
+
+      - name: Build Mod
+        working-directory: ${{ steps.find-project.outputs.project_dir }}
         run: gradle build --no-daemon --stacktrace
 
       - name: Upload Mod
@@ -41,4 +65,5 @@ jobs:
         if: success()
         with:
           name: fabric-mod
-          path: fabric-mod-builder/build/libs/*.jar
+          path: ${{ steps.find-project.outputs.project_dir }}/build/libs/*.jar
+          if-no-files-found: error
