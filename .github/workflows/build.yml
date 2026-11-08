@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
@@ -27,7 +27,6 @@ jobs:
           gradle-version: 8.6
 
       - name: Build
-        working-directory: fabric-mod-builder
         run: gradle build --no-daemon --stacktrace
 
       - name: Upload Mod
@@ -35,4 +34,4 @@ jobs:
         if: success()
         with:
           name: fabric-mod
-          path: fabric-mod-builder/build/libs/*.jar
+          path: build/libs/*.jar
